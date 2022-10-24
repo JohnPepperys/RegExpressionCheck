@@ -11,9 +11,9 @@ namespace ConsoleApp2
         {
             Console.WriteLine("Start prog!!!");
 
-            string ss = "ab";
-            string pp = ".*..c*";
-            bool result = true;
+            string ss = "abx";
+            string pp = "ab.*cd.*e*x";
+            bool result = false;
             Console.ForegroundColor = (IsMatch(ss, pp) != result) ? ConsoleColor.Red : ConsoleColor.Gray;
             Console.WriteLine($"{ss} - {pp} - Wait {result}: result - {IsMatch(ss, pp)}");
             Console.ForegroundColor = ConsoleColor.Gray;
@@ -79,26 +79,80 @@ namespace ConsoleApp2
             // and create work pattern ------------------
             int minlen = p.Length;
             char[] arr = new char[minlen];
-            int j = 0;
-            int inds = 0;
-            int indp = 0;
-            int starind = -1;
             int laststarind = -1;
+            int endindex = -1;
             int step1_stop = -1;
+            int internalstart = -1;
+            int internalend = -1;
+            // fisrt check - before * --------------------------------------------------------
+            int inds = 0;
+            int indp;
+            for (indp = 0; indp < p.Length; indp++)
+            {
+                if (indp + 1 < p.Length && p[indp + 1] == '*') {
+                    laststarind = indp - 1;
+                    break;
+                }
 
-            for (int i = 0; i < p.Length; i++)
+                if (p[indp] != '.' && p[indp] != s[inds]) {
+                    return false;
+                }
+                else {
+                    inds++;
+                }
+
+                if (inds == s.Length) {
+                    indp++;
+                    break;
+                }
+            }
+
+            // here check stop for cycle by count or exit by break ?
+            if (laststarind == -1)
+            {
+                return (inds == indp && indp == p.Length && inds == s.Length);
+            }
+
+            // ------------ next step - middle check -------------------------------------------
+            inds = 0, indp = 0;
+            for (int i = laststarind; i < p.Length; i++)
             {
                 if (p[i] == '*')
                 {
-                    minlen -= 2;
-                    j--;
-                    arr[j] = (char)0;
-                    laststarind = i;
+                    if (p[i - 1] == '.')
+                    {
+                        if (i + 1 < p.Length)
+                        {
+                            i++;
+                            internalstart = i;
+                        }
+                        else { return true; }
+                    }
+                    else
+                    {
+                        internalstart = i - 1;
+                    }
                 }
-                else
+            }
+            for (int i = p.Length - 1; internalstart < i; i++)
+            {
+                if (p[i] == '*')
                 {
-                    arr[j] = p[i];
-                    j++;
+                    if (i - 1 > laststarind)
+                    {
+                        if (p[i-1] == '.')
+                        {
+                            internalend = i - 1;
+                        } else
+                        {
+                            internalend = i;
+                        }
+                        if (i + 1 < p.Length)
+                        {
+                            endindex = i + 1;
+                        }
+                        else { return true; }
+                    }
                 }
             }
 
@@ -107,46 +161,10 @@ namespace ConsoleApp2
                 return false;
             }
 
-            // fisrt check - before * --------------------------------------------------------
-            for (indp = 0; indp < p.Length; indp++)
-            {
-                if (indp + 1 < p.Length && p[indp + 1] == '*')
-                {
-                    starind = indp + 1;
-                    break;
-                }
-
-                if (p[indp] != '.' && p[indp] != s[inds])
-                {
-                    return false;
-                }
-                else
-                {
-                    inds++;
-                }
-
-                if (inds == s.Length)
-                {
-                    indp++;
-                    break;
-                }
-            }
-
-            // here check stop for cycle by count or exit by break ?
-            if (starind == -1)
-            {
-                return (inds == indp && indp == p.Length && inds == s.Length);
-            }
-
-            // ------------ next step - middle check -------------------------------------------
-            else
-            {
-
-            }
 
             // ------------------- last check - end -------------------------------------------
             step1_stop = inds - 1;
-            if (laststarind != -1 && laststarind != p.Length - 1)
+            if (endindex != -1 && endindex != p.Length - 1)
             {
                 indp = p.Length - 1;
                 indp = p.Length - 1;
